@@ -1,23 +1,24 @@
-.SILENT :
-.PHONY : dockerize clean fmt
-
 TAG:=`git describe --abbrev=0 --tags`
 LDFLAGS:=-X main.buildVersion=$(TAG)
 GO111MODULE:=on
 
 all: dockerize
 
+.PHONY: deps
 deps:
 	go mod tidy
 
+.PHONY: dockerize
 dockerize:
 	echo "Building dockerize"
 	go install -ldflags "$(LDFLAGS)"
 
+.PHONY: dist-clean
 dist-clean:
 	rm -rf dist
 	rm -f dockerize-*.tar.gz
 
+.PHONY: dist
 dist: deps dist-clean
 	mkdir -p dist/alpine-linux/amd64 && GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -a -tags netgo -installsuffix netgo -o dist/alpine-linux/amd64/dockerize
 	mkdir -p dist/alpine-linux/ppc64le && GOOS=linux GOARCH=ppc64le go build -ldflags "$(LDFLAGS)" -a -tags netgo -installsuffix netgo -o dist/alpine-linux/ppc64le/dockerize
@@ -27,8 +28,9 @@ dist: deps dist-clean
 	mkdir -p dist/linux/armhf && GOOS=linux GOARCH=arm GOARM=6 go build -ldflags "$(LDFLAGS)" -o dist/linux/armhf/dockerize
 	mkdir -p dist/linux/ppc64le && GOOS=linux GOARCH=ppc64le go build -ldflags "$(LDFLAGS)" -o dist/linux/ppc64le/dockerize
 	mkdir -p dist/darwin/amd64 && GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/darwin/amd64/dockerize
-	mkdir -p dist/darwin/amd64 && GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/darwin/arm64/dockerize
+	mkdir -p dist/darwin/arm64 && GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/darwin/arm64/dockerize
 
+.PHONY: release
 release: dist
 	tar -cvzf dockerize-alpine-linux-amd64-$(TAG).tar.gz -C dist/alpine-linux/amd64 dockerize
 	tar -cvzf dockerize-alpine-linux-ppc64le-$(TAG).tar.gz -C dist/alpine-linux/ppc64le dockerize
